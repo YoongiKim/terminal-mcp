@@ -27,20 +27,29 @@ For example, when you run `flutter run -d macos`:
 
 ### 1. Install
 
+#### Option A: Install via Git (Development)
 ```bash
 git clone https://github.com/YoongiKim/terminal-mcp.git
 cd terminal-mcp
 npm install && npm run build
 ```
 
+#### Option B: Install Globally (via NPM)
+If you have the source locally:
+```bash
+npm install -g .
+```
+
 ### 2. Add to your MCP config
+
+If installed via **Option A**, use the absolute path to `dist/index.js`.
+If installed via **Option B**, you can simply use the command name:
 
 ```json
 {
   "mcpServers": {
     "terminal-mcp": {
-      "command": "node",
-      "args": ["/absolute/path/to/terminal-mcp/dist/index.js"]
+      "command": "terminal-mcp"
     }
   }
 }
