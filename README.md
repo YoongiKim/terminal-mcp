@@ -42,8 +42,20 @@ npm install -g .
 
 ### 2. Add to your MCP config
 
-If installed via **Option A**, use the absolute path to `dist/index.js`.
-If installed via **Option B**, you can simply use the command name:
+**Option A** (Git clone): Use the absolute path to `dist/index.js`.
+
+```json
+{
+  "mcpServers": {
+    "terminal-mcp": {
+      "command": "node",
+      "args": ["/absolute/path/to/terminal-mcp/dist/index.js"]
+    }
+  }
+}
+```
+
+**Option B** (Global install): After running `npm install -g .`, you can use the command name directly without specifying the full path.
 
 ```json
 {
