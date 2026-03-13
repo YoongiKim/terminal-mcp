@@ -186,7 +186,7 @@ server.prompt(
           role: "user",
           content: {
             type: "text",
-            text: `Tell the user they can view this session live by running: tmux attach -t ${id}`,
+            text: `Print the following command to the user so they can attach to the tmux session:\n\`\`\`\ntmux attach -t ${id}\n\`\`\``,
           },
         },
       ],
