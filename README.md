@@ -16,9 +16,12 @@ For example, when you run `flutter run -d macos`:
 ## Requirements
 
 - **Node.js** ≥ 18
-- **tmux**
-  - macOS: `brew install tmux`
-  - Linux: `sudo apt install tmux`
+- **tmux**:
+  - **macOS**: `brew install tmux`
+  - **Linux (Ubuntu/Debian)**: `sudo apt install tmux`
+  - **Linux (CentOS/RHEL)**: `sudo yum install tmux`
+  - **Linux (Arch)**: `sudo pacman -S tmux`
+  - **Windows**: Install [WSL](https://learn.microsoft.com/en-us/windows/wsl/install) then `sudo apt install tmux`
 
 ## Setup
 
