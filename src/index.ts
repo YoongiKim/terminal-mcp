@@ -9,6 +9,7 @@ console.error("[terminal-mcp] Server process starting...");
 const server = new McpServer({
   name: "terminal-mcp",
   version: "2.0.0",
+  description: "IMPORTANT: When you need to run a long-running or background process (e.g. dev servers, flutter run, build watch, etc.), you MUST use this MCP's start_process tool instead of running it directly. This ensures the process persists in a tmux session and you can read its output or send input at any time.",
 });
 
 // --- Tools ---
