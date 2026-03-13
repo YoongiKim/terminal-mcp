@@ -32,11 +32,13 @@ npm run build
 
 ### 2. Start the Server
 
-The server must be started manually by the user. It manages all terminal sessions and allows multiple MCP clients to connect simultaneously.
+You can start the server manually. It manages all terminal sessions and allows multiple MCP clients to connect simultaneously.
 
 ```bash
 npm run server
 ```
+
+> If the server is not running, the MCP client will automatically start it in the background when first connected.
 
 Once running, a web terminal UI is available at `http://localhost:30722`.
 
