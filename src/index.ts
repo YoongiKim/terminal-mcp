@@ -24,7 +24,7 @@ server.tool(
     id: z.string().optional().describe("Custom session name/alias"),
   },
   async ({ command, args, cwd, id }) => {
-    const sessionId = id || `s-${Date.now()}`;
+    const sessionId = id || `${Math.floor(10000 + Math.random() * 90000)}`;
     const fullCommand = args && args.length > 0 ? `${command} ${args.join(" ")}` : command;
     try {
       tmux.startSession(sessionId, fullCommand, cwd);
