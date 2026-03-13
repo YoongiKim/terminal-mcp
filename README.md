@@ -1,38 +1,36 @@
-# Terminal MCP (tmux-based)
+# Terminal MCP
 
-A persistent terminal session manager for AI coding tools, built as an MCP server using **tmux** as the backend.
+An MCP server that gives AI coding assistants persistent, interactive terminal sessions using **tmux**.
 
-## Why Terminal MCP?
+## Why?
 
-Standard AI coding tools (Cursor, Windsurf, RooCode, etc.) execute commands in temporary shells. This has major drawbacks for complex workflows:
-- **No Background Monitoring**: Long-running processes (like `flutter run`) can't be easily monitored for errors.
-- **No Interaction**: You can't send hotkeys (like `r` for Hot Reload) to a running process.
-- **Copy-Paste Hell**: When a build fails, you have to manually copy the logs back to the AI.
-- **Lack of Persistence**: If the IDE restarts or the connection drops, you lose the terminal state.
+AI coding tools can run simple one-off commands, but they can't handle long-running processes.
 
-**Terminal MCP** solves this by wrapping **tmux**. AI can now start persistent sessions, read streaming logs, and send real-time inputs. **Since it uses tmux, sessions survive even if you close the IDE — you can even attach to them from your own terminal.**
+For example, when you run `flutter run -d macos`:
+- The AI can't read the output once the initial command returns.
+- Runtime errors go unnoticed — you have to copy-paste logs manually.
+- Sending hotkeys like `r` (Hot Reload) or `Ctrl+C` is impossible.
+
+**Terminal MCP** lets the AI start processes, read their output at any time, and send keystrokes — all through tmux. Sessions persist even if you close the IDE.
 
 ## Requirements
 
-- **macOS or Linux**
-- **tmux**: Must be installed on your system.
+- **Node.js** ≥ 18
+- **tmux**
   - macOS: `brew install tmux`
-  - Linux: `sudo apt install tmux` (or equivalent)
+  - Linux: `sudo apt install tmux`
 
-## Installation & Setup
+## Setup
 
-### 1. Build the project
+### 1. Install
 
 ```bash
 git clone https://github.com/YoongiKim/terminal-mcp.git
 cd terminal-mcp
-npm install
-npm run build
+npm install && npm run build
 ```
 
-### 2. Configure Your MCP Client
-
-Add the following to your MCP configuration (e.g., `mcp_config.json` for RooCode or Claude Desktop):
+### 2. Add to your MCP config
 
 ```json
 {
@@ -45,25 +43,30 @@ Add the following to your MCP configuration (e.g., `mcp_config.json` for RooCode
 }
 ```
 
-## Architecture
+That's it. No server to run — the IDE launches the MCP process directly via stdio.
 
-Unlike the previous version, **Terminal MCP 2.0** uses a direct **Stdio** approach with a **tmux** backend. 
-
-- **One Process**: The MCP server and session manager run together.
-- **Persistence**: Shell processes live inside tmux sessions, independent of the MCP server's lifecycle.
-- **Stability**: Uses standard stdio for communication — no more SSE or network glitches.
-
-## Available Tools
+## Tools
 
 | Tool | Description |
 |------|-------------|
-| `start_process` | Start a new tmux session with a command and optional alias/ID. |
-| `send_input` | Send text or control keys (e.g., `Ctrl+C`, `Enter`) to a session. |
-| `read_output` | Capture the current screen of a tmux session. |
-| `list_sessions` | List all active tmux sessions managed by this tool. |
-| `get_session_info` | Get details (PID, command, state) for a specific session. |
-| `stop_process` | Kill a tmux session. |
-| `wait_until_complete` | Wait for a process to finish and return its final state. |
+| `start_process` | Start a command in a new tmux session (supports custom IDs). |
+| `read_output` | Capture current terminal output from a session. |
+| `send_input` | Send text or control keys (`Ctrl+C`, `Enter`, etc.). |
+| `list_sessions` | List all active sessions. |
+| `get_session_info` | Get PID, command, and state of a session. |
+| `stop_process` | Kill a session. |
+| `wait_until_complete` | Block until a process exits. |
+| `wait_for_seconds` | Wait N seconds, then capture output. |
+
+## How it works
+
+The MCP server runs as a single stdio process. It delegates all session management to **tmux**:
+
+```
+IDE ←stdio→ MCP Server ←exec→ tmux ← manages → shell sessions
+```
+
+Since sessions live inside tmux, they survive IDE restarts. You can even attach manually with `tmux attach -t <session-id>`.
 
 ## License
 
