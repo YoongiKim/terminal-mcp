@@ -13,7 +13,7 @@
   "bin": {
     "terminal-mcp": "./dist/index.js"
   },
-  "description": "MCP server for persistent terminal sessions using tmux",
+  "description": "An MCP server that enables AI to run processes in the background using tmux, monitor progress mid-execution, and send interactive key inputs.",
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc",
