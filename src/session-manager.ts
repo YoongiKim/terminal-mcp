@@ -5,6 +5,7 @@ import { EventEmitter } from "events";
 export interface OutputEntry {
   text: string;
   timestamp: number;
+  index: number;
 }
 
 export interface TerminalSession {
@@ -18,6 +19,8 @@ export interface TerminalSession {
   createdAt: number;
   outputBuffer: OutputEntry[];
   pty: pty.IPty;
+  nextIndex: number;
+  readCursor: number;
 }
 
 export interface SessionInfo {
@@ -77,10 +80,12 @@ export class SessionManager extends EventEmitter {
       createdAt: Date.now(),
       outputBuffer: [],
       pty: ptyProcess,
+      nextIndex: 0,
+      readCursor: 0,
     };
 
     ptyProcess.onData((data: string) => {
-      const entry: OutputEntry = { text: data, timestamp: Date.now() };
+      const entry: OutputEntry = { text: data, timestamp: Date.now(), index: session.nextIndex++ };
       session.outputBuffer.push(entry);
       this.emit('data', { sessionId: id, text: data });
       // Trim buffer if too large
@@ -113,21 +118,30 @@ export class SessionManager extends EventEmitter {
 
   readOutput(
     sessionId: string,
-    sinceMs?: number
-  ): { entries: OutputEntry[]; isRunning: boolean; exitCode: number | null } {
+    sinceMs?: number,
+    sinceIndex?: number
+  ): { entries: OutputEntry[]; isRunning: boolean; exitCode: number | null; lastIndex: number } {
     const session = this.getSession(sessionId);
 
     let entries: OutputEntry[];
-    if (sinceMs !== undefined) {
+    if (sinceIndex !== undefined) {
+      entries = session.outputBuffer.filter((e) => e.index >= sinceIndex);
+    } else if (sinceMs !== undefined) {
       entries = session.outputBuffer.filter((e) => e.timestamp > sinceMs);
     } else {
-      entries = [...session.outputBuffer];
+      // Use internal cursor if no criteria provided
+      entries = session.outputBuffer.filter((e) => e.index >= session.readCursor);
+    }
+
+    if (entries.length > 0) {
+      session.readCursor = entries[entries.length - 1].index + 1;
     }
 
     return {
       entries,
       isRunning: session.isRunning,
       exitCode: session.exitCode,
+      lastIndex: session.nextIndex,
     };
   }
 

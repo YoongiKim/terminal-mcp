@@ -32,7 +32,10 @@ graph TD
 |------|------|
 | `start_process` | Start a new terminal process with optional alias/ID. |
 | `send_input` | Send text or control characters (e.g., `\u0003` for Ctrl+C). |
-| `read_output` | Read new output lines (supports incremental reading). |
+| `read_output` | Read new output lines (supports incremental reading and internal cursors). |
+
+> [!TIP]
+> `read_output` now tracks a **read cursor** per session. You don't need to manage timestamps; calling it repeatedly will automatically return only the new output since the last call!
 | `list_sessions` | List all active and finished sessions. |
 | `get_session_info` | Get detailed state and metadata for a specific session. |
 | `stop_process` | Terminate a running session. |

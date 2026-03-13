@@ -36,12 +36,13 @@ const TOOLS: Tool[] = [
   },
   {
     name: "read_output",
-    description: "Read process output.",
+    description: "Read process output. Tracks a cursor per session by default.",
     inputSchema: {
       type: "object",
       properties: {
         session_id: { type: "string" },
-        since_timestamp: { type: "number" },
+        since_timestamp: { type: "number", description: "Read output since this timestamp." },
+        since_index: { type: "number", description: "Read output since this index (cursor)." },
         strip_ansi: { type: "boolean", default: true },
       },
       required: ["session_id"],
@@ -138,8 +139,14 @@ export function createMcpServer(manager: SessionManager): Server {
           return { content: [{ type: "text", text: JSON.stringify({ success: true }) }] };
         }
         case "read_output": {
-          const input = z.object({ session_id: z.string(), since_timestamp: z.number().optional(), strip_ansi: z.boolean().optional().default(true) }).parse(args);
-          const result = manager.readOutput(input.session_id, input.since_timestamp);
+          const input = z.object({ 
+            session_id: z.string(), 
+            since_timestamp: z.number().optional(), 
+            since_index: z.number().optional(),
+            strip_ansi: z.boolean().optional().default(true) 
+          }).parse(args);
+          
+          const result = manager.readOutput(input.session_id, input.since_timestamp, input.since_index);
           let combined = result.entries.map((e) => e.text).join("");
           if (input.strip_ansi) combined = stripAnsi(combined);
           
@@ -147,8 +154,13 @@ export function createMcpServer(manager: SessionManager): Server {
             combined += `\nProcess finished with exit code: ${result.exitCode}\n`;
           }
           
-          const lastTimestamp = result.entries.length > 0 ? result.entries[result.entries.length - 1].timestamp : (input.since_timestamp ?? Date.now());
-          return { content: [{ type: "text", text: JSON.stringify({ output: combined, is_running: result.isRunning, exit_code: result.exitCode, last_timestamp: lastTimestamp }) }] };
+          return { content: [{ type: "text", text: JSON.stringify({ 
+            output: combined, 
+            is_running: result.isRunning, 
+            exit_code: result.exitCode, 
+            last_timestamp: result.entries.length > 0 ? result.entries[result.entries.length - 1].timestamp : (input.since_timestamp ?? Date.now()),
+            last_index: result.lastIndex
+          }) }] };
         }
         case "wait_until_complete": {
           const input = z.object({
