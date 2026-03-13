@@ -27,12 +27,22 @@ export function sendSpecialKey(id: string, key: string): void {
 
 export function capturePane(id: string, start?: number): string {
   assertSession(id);
+  // tmux capture-pane -S <start> -p
+  // If start is negative, it's relative to the start of history.
+  // We want to capture from a specific absolute line index.
   const startOpt = start !== undefined ? `-S ${start}` : "-S -";
   try {
     return run(`tmux capture-pane -t ${quote(id)} -p ${startOpt}`);
   } catch {
     return "";
   }
+}
+
+export function getLineCount(id: string): number {
+  assertSession(id);
+  // history_size + pane_height gives total lines available in the buffer
+  const output = run(`tmux display-message -t ${quote(id)} -p "#{history_size}"`);
+  return parseInt(output, 10);
 }
 
 export function listSessions(): string[] {

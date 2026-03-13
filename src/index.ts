@@ -61,19 +61,42 @@ server.tool(
   }
 );
 
+// --- State ---
+const cursors: Map<string, number> = new Map();
+
+// --- Tools ---
+
 server.tool(
   "read_output",
-  "Read the current terminal output from a tmux session.",
+  "Read the current terminal output from a tmux session. Automatically tracks the last read position.",
   {
     session_id: z.string(),
-    lines: z.number().optional().describe("Number of lines from the top to capture (default: entire scrollback)"),
+    lines: z.number().optional().describe("Number of lines to read from the last position. If omitted, reads all new lines."),
+    tail: z.number().optional().describe("If set, ignores the cursor and just reads the last N lines."),
   },
-  async ({ session_id, lines }) => {
+  async ({ session_id, lines, tail }) => {
     try {
-      const output = tmux.capturePane(session_id, lines !== undefined ? -lines : undefined);
+      if (tail !== undefined) {
+        const output = tmux.capturePane(session_id, -tail);
+        return { content: [{ type: "text", text: JSON.stringify({ output, is_running: tmux.getSessionInfo(session_id).paneDead !== "1" }) }] };
+      }
+
+      const currentTotal = tmux.getLineCount(session_id);
+      const lastRead = cursors.get(session_id) || 0;
+      
+      // Capture from lastRead to currentTotal
+      // tmux capture-pane -S <idx> captures from that offset. 
+      // 0 is the start of history.
+      let output = "";
+      if (currentTotal > lastRead) {
+        output = tmux.capturePane(session_id, lastRead);
+        cursors.set(session_id, currentTotal);
+      }
+
       const info = tmux.getSessionInfo(session_id);
       const isRunning = info.paneDead !== "1";
-      return { content: [{ type: "text", text: JSON.stringify({ output, is_running: isRunning }) }] };
+      
+      return { content: [{ type: "text", text: JSON.stringify({ output, is_running: isRunning, new_lines: currentTotal - lastRead }) }] };
     } catch (e: any) {
       return { content: [{ type: "text", text: JSON.stringify({ error: e.message }) }], isError: true };
     }
