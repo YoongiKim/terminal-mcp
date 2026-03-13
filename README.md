@@ -2,7 +2,7 @@
 
 An MCP server that gives AI coding assistants persistent, interactive terminal sessions using **tmux**.
 
-![Screenshot](docs/screenshot.png)
+![Screenshot](docs/screenshot.jpg)
 
 ## Why?
 
