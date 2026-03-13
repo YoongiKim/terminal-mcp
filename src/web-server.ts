@@ -12,8 +12,14 @@ export function startWebServer(sessionManager: SessionManager, port: number = 30
   const wss = new WebSocketServer({ server });
 
   // Serve static files from the 'public' directory
-  const publicDir = path.join(process.cwd(), 'public');
+  // In dist/web-server.js, __dirname is dist/
+  const publicDir = path.join(__dirname, '..', 'public');
   app.use(express.static(publicDir));
+
+  // Explicitly serve index.html for the root route
+  app.get('/', (req, res) => {
+    res.sendFile(path.join(publicDir, 'index.html'));
+  });
 
   // ONLY use express.json() for /api routes to avoid breaking SSE stream parsing
   const apiRouter = express.Router();
