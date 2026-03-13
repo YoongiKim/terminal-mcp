@@ -6,6 +6,7 @@
   "scripts": {
     "build": "tsc",
     "server": "node dist/server.js",
+    "stop": "lsof -t -i :${PORT:-30722} | xargs kill 2>/dev/null || echo 'Server not running'",
     "client": "node dist/client.js",
     "start": "npm run server",
     "dev": "tsc --watch"
