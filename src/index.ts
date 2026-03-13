@@ -175,28 +175,17 @@ server.tool(
 
 server.prompt(
   "how-to-attach",
-  "Explain to the user how to attach to a tmux session from their terminal.",
+  "Tell the user how to attach to a tmux session.",
   { session_id: z.string().optional().describe("Session ID to attach to") },
   ({ session_id }) => {
-    const cmd = session_id ? `tmux attach -t ${session_id}` : "tmux attach -t <session-id>";
-    const listCmd = "tmux ls";
+    const id = session_id || "<session-id>";
     return {
       messages: [
         {
           role: "user",
           content: {
             type: "text",
-            text: [
-              `Tell the user how to view a running terminal session directly from their own terminal.`,
-              ``,
-              `Steps:`,
-              `1. Open a terminal (e.g., Terminal.app, iTerm2).`,
-              `2. Run \`${listCmd}\` to see all active sessions.`,
-              `3. Run \`${cmd}\` to attach to the session and see its live output.`,
-              `4. To detach without killing the session, press \`Ctrl+B\` then \`D\`.`,
-              ``,
-              `Make sure to explain this clearly and concisely to the user.`,
-            ].join("\n"),
+            text: `Tell the user they can view this session live by running: tmux attach -t ${id}`,
           },
         },
       ],
