@@ -1,80 +1,55 @@
-# Terminal MCP Server
+# Terminal MCP
 
-A Model Context Protocol (MCP) server that provides a persistent, shared terminal environment for AI coding assistants. 
+AI 코딩 도구를 위한 영구 터미널 세션 관리 MCP 서버.
 
-Unlike standard terminal implementations, `terminal-mcp` uses a **Shared Server architecture**. This allows multiple IDE instances, windows, or even a web browser to share and interact with the same terminal sessions seamlessly.
+## Why?
 
-## Key Features
+기존 AI 코딩 도구(Cursor, Windsurf, RooCode 등)는 간단한 명령어는 실행할 수 있지만, 장시간 실행되는 프로세스를 다루지 못합니다.
 
-- **Persistent Sessions**: Start a process in one IDE window and monitor/control it from another.
-- **Auto-Startup**: The MCP client automatically launches the shared server in the background if it's not already running.
-- **Web Terminal UI**: Built-in web interface at `http://localhost:30722` to view and interact with real-time terminal output.
-- **Human-Readable Aliases**: Create sessions with custom IDs (e.g., `dev-server`) instead of random UUIDs for easy tracking.
-- **PTY Support**: Full interactive terminal support with incremental output reading.
+예를 들어 `flutter run -d macos`를 실행하면:
+- 프로세스가 백그라운드에서 계속 돌아가는데, AI는 이 출력을 읽을 수 없습니다.
+- 런타임 오류가 발생해도 AI가 알 수 없어서, 사용자가 에러 로그를 직접 복사해서 붙여넣어줘야 합니다.
+- `r` 키를 눌러 Hot Reload를 하거나, `Ctrl+C`로 종료하는 등의 상호작용이 불가능합니다.
 
-## Architecture
+**Terminal MCP**를 사용하면 AI가 직접:
+1. 프로세스를 시작하고 (`start_process`)
+2. 실행 중인 출력을 읽어오고 (`read_output`)
+3. 키 입력을 보내고 (`send_input`)
+4. 오류를 확인하고 바로 코드를 수정하는 작업을 이어갈 수 있습니다.
 
-```mermaid
-graph TD
-    IDE1[IDE Window 1] --> Client1[MCP Client]
-    IDE2[IDE Window 2] --> Client2[MCP Client]
-    Browser[Web Browser] --> WebUI[Web UI]
-    Client1 -- SSE/HTTP --- Server[Shared Server]
-    Client2 -- SSE/HTTP --- Server
-    WebUI -- WebSocket --- Server
-    Server --- Shell1[Terminal Session 1]
-    Server --- Shell2[Terminal Session 2]
-```
+**사용자가 에러 메시지를 일일이 복사-붙여넣기 할 필요가 없어집니다.**
 
-## Tools
+## Usage
 
-| Tool | Description |
-|------|------|
-| `start_process` | Start a new terminal process with optional alias/ID. |
-| `send_input` | Send text or control characters (e.g., `\u0003` for Ctrl+C). |
-| `read_output` | Read new output lines (supports incremental reading). |
-| `list_sessions` | List all active and finished sessions. |
-| `get_session_info` | Get detailed state and metadata for a specific session. |
-| `stop_process` | Terminate a running session. |
-| `wait_until_complete` | Block until a process finishes and return its final output. |
-
-## Quick Start
-
-### 1. Build the project
+### 1. 설치 및 빌드
 
 ```bash
+git clone https://github.com/YoongiKim/terminal-mcp.git
+cd terminal-mcp
 npm install
 npm run build
 ```
 
-AI 코드 에디터(RooCode, Claude Desktop 등)에서 터미널 프로세스를 제어하는 MCP 서버입니다.
+### 2. 서버 실행
 
-## Motivation 🚀
+서버는 사용자가 직접 실행합니다. 서버가 터미널 세션들을 관리하며, 여러 MCP 클라이언트가 동시에 접속할 수 있습니다.
 
-기존의 AI 코딩 툴들은 단발성 명령어(예: `ls`, `cat`, 짧은 컴파일 명령어)는 잘 실행하지만, 다음과 같은 시나리오에서는 한계가 있습니다:
+```bash
+npm run server
+```
 
-1.  **백그라운드 실행 불가**: 서버나 앱을 띄워 놓고 계속해서 로그를 모니터링하기 어렵습니다.
-2.  **상호작용 한계**: `flutter run`처럼 실행 중에 특정 키(`r` 키로 hot-reload 등)를 입력해야 하는 상황에 대응하기 어렵습니다.
-3.  **오류 대응의 번거로움**: 실행 중 오류가 발생하면 사용자가 터미널 로그를 일일이 복사해서 AI에게 붙여넣어줘야 합니다.
+서버가 실행되면 `http://localhost:30722`에서 웹 터미널 UI에 접속할 수 있습니다.
 
-**Terminal MCP**는 이러한 문제를 해결합니다. AI가 직접 터미널 세션을 유지하고, 필요할 때 로그를 읽어오며, 상호작용 키를 입력할 수 있게 해줍니다.
+### 3. MCP 설정
 
-### 예시: Flutter 개발 📱
-
-`flutter run -d macos`로 앱을 실행했다고 가정해 봅시다.
--   **기존**: 실행 중 오류가 나면 사용자가 로그를 복사해줘야 합니다.
--   **Terminal MCP 사용 시**: AI가 `read_output`으로 실시간 오류 로그를 즉시 확인합니다. 사용자가 오류 메시지를 복사해 줄 필요 없이, AI가 바로 "오류를 확인했습니다. 코드를 수정할까요?"라고 제안하며 작업을 이어갈 수 있습니다. 또한 수정한 뒤 `send_input`으로 `r`을 보내 즉시 Hot-reload를 트리거할 수도 있습니다.
-
-### 2. Configure your MCP Host
-
-Add the server to your MCP configuration (e.g., Claude Desktop, RooCode, etc.):
+AI 코딩 도구에서 MCP 클라이언트를 등록합니다. 클라이언트가 서버에 접속하여 프로세스를 생성하고 제어합니다.
 
 ```json
 {
   "mcpServers": {
     "terminal-mcp": {
       "command": "node",
-      "args": ["/path/to/terminal-mcp/dist/client.js"],
+      "args": ["/absolute/path/to/terminal-mcp/dist/client.js"],
       "env": {
         "PORT": "30722"
       }
@@ -83,9 +58,41 @@ Add the server to your MCP configuration (e.g., Claude Desktop, RooCode, etc.):
 }
 ```
 
-### 3. Access Web UI
-Once the server is running (manually via `npm run server` or automatically via client), access the visual terminal at:
-`http://localhost:30722`
+## Architecture
+
+```
+┌──────────┐    ┌──────────┐
+│  IDE 1   │    │  IDE 2   │
+│ (Client) │    │ (Client) │
+└────┬─────┘    └────┬─────┘
+     │               │
+     └───────┬───────┘
+             │ SSE/HTTP
+     ┌───────┴───────┐
+     │    Server     │ ← npm run server
+     │ (Port 30722)  │
+     └───┬───────┬───┘
+         │       │
+    ┌────┴──┐ ┌──┴────┐
+    │ bash  │ │ flutter│
+    │session│ │session │
+    └───────┘ └───────┘
+```
+
+서버가 모든 터미널 세션을 관리하고, 각 IDE의 MCP 클라이언트가 서버에 접속하는 구조입니다.
+
+## Tools
+
+| Tool | Description |
+|------|-------------|
+| `start_process` | 새 프로세스 시작. 세션 이름(alias)을 지정할 수 있음. |
+| `send_input` | 실행 중인 프로세스에 텍스트 또는 키 입력 전송. |
+| `read_output` | 프로세스 출력 읽기. 마지막 읽은 위치를 기억하여 새 출력만 반환. |
+| `list_sessions` | 전체 세션 목록 조회. |
+| `get_session_info` | 특정 세션의 상세 정보 조회. |
+| `stop_process` | 프로세스 종료. |
+| `wait_until_complete` | 프로세스 종료까지 대기 후 결과 반환. |
+| `wait_for_seconds` | 지정된 시간 동안 대기하며 출력 수집. |
 
 ## License
 
