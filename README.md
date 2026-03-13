@@ -2,6 +2,8 @@
 
 An MCP server that gives AI coding assistants persistent, interactive terminal sessions using **tmux**.
 
+![Screenshot](docs/screenshot.png)
+
 ## Why?
 
 AI coding tools can run simple one-off commands, but they can't handle long-running processes.
