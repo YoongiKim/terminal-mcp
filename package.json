@@ -1,29 +1,19 @@
 {
   "name": "terminal-mcp",
-  "version": "1.0.0",
-  "description": "MCP server for controlling terminal processes - run commands, send input, read output",
+  "version": "2.0.0",
+  "type": "module",
+  "description": "MCP server for persistent terminal sessions using tmux",
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc",
-    "server": "node dist/server.js",
-    "stop": "lsof -t -i :${PORT:-30722} | xargs kill 2>/dev/null || echo 'Server not running'",
-    "client": "node dist/client.js",
-    "start": "npm run server",
     "dev": "tsc --watch"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.7.0",
-    "eventsource": "^2.0.2",
-    "express": "^5.2.1",
-    "node-pty": "^0.10.1",
-    "ws": "^8.19.0",
     "zod": "^3.22.4"
   },
   "devDependencies": {
-    "@types/eventsource": "^1.1.15",
-    "@types/express": "^5.0.6",
     "@types/node": "^22.0.0",
-    "@types/ws": "^8.18.1",
     "typescript": "^5.4.0"
   },
   "engines": {

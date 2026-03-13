@@ -1,27 +1,27 @@
-# Terminal MCP
+# Terminal MCP (tmux-based)
 
-A persistent terminal session manager for AI coding tools, built as an MCP server.
+A persistent terminal session manager for AI coding tools, built as an MCP server using **tmux** as the backend.
 
-## Why?
+## Why Terminal MCP?
 
-AI coding tools (Cursor, Windsurf, RooCode, etc.) can run simple commands, but they can't handle long-running processes.
+Standard AI coding tools (Cursor, Windsurf, RooCode, etc.) execute commands in temporary shells. This has major drawbacks for complex workflows:
+- **No Background Monitoring**: Long-running processes (like `flutter run`) can't be easily monitored for errors.
+- **No Interaction**: You can't send hotkeys (like `r` for Hot Reload) to a running process.
+- **Copy-Paste Hell**: When a build fails, you have to manually copy the logs back to the AI.
+- **Lack of Persistence**: If the IDE restarts or the connection drops, you lose the terminal state.
 
-For example, if you run `flutter run -d macos`:
-- The process keeps running in the background, but the AI can't read its output.
-- If a runtime error occurs, the AI has no way of knowing — you have to manually copy-paste the error log.
-- Interactive inputs like pressing `r` for Hot Reload or `Ctrl+C` to quit are impossible.
+**Terminal MCP** solves this by wrapping **tmux**. AI can now start persistent sessions, read streaming logs, and send real-time inputs. **Since it uses tmux, sessions survive even if you close the IDE — you can even attach to them from your own terminal.**
 
-With **Terminal MCP**, the AI can directly:
-1. Start a process (`start_process`)
-2. Read its output in real-time (`read_output`)
-3. Send keystrokes (`send_input`)
-4. Detect errors and continue fixing code without any manual copy-pasting.
+## Requirements
 
-**No more copy-pasting error messages back and forth.**
+- **macOS or Linux**
+- **tmux**: Must be installed on your system.
+  - macOS: `brew install tmux`
+  - Linux: `sudo apt install tmux` (or equivalent)
 
-## Usage
+## Installation & Setup
 
-### 1. Install & Build
+### 1. Build the project
 
 ```bash
 git clone https://github.com/YoongiKim/terminal-mcp.git
@@ -30,31 +30,16 @@ npm install
 npm run build
 ```
 
-### 2. Start the Server
+### 2. Configure Your MCP Client
 
-You can start the server manually. It manages all terminal sessions and allows multiple MCP clients to connect simultaneously.
-
-```bash
-npm run server
-```
-
-> If the server is not running, the MCP client will automatically start it in the background when first connected.
-
-Once running, a web terminal UI is available at `http://localhost:30722`.
-
-### 3. Configure Your MCP Client
-
-Register the MCP client in your AI coding tool. The client connects to the server to create and control processes.
+Add the following to your MCP configuration (e.g., `mcp_config.json` for RooCode or Claude Desktop):
 
 ```json
 {
   "mcpServers": {
     "terminal-mcp": {
       "command": "node",
-      "args": ["/absolute/path/to/terminal-mcp/dist/client.js"],
-      "env": {
-        "PORT": "30722"
-      }
+      "args": ["/absolute/path/to/terminal-mcp/dist/index.js"]
     }
   }
 }
@@ -62,39 +47,23 @@ Register the MCP client in your AI coding tool. The client connects to the serve
 
 ## Architecture
 
-```
-┌──────────┐    ┌──────────┐
-│  IDE 1   │    │  IDE 2   │
-│ (Client) │    │ (Client) │
-└────┬─────┘    └────┬─────┘
-     │               │
-     └───────┬───────┘
-             │ SSE/HTTP
-     ┌───────┴───────┐
-     │    Server     │ ← npm run server
-     │ (Port 30722)  │
-     └───┬───────┬───┘
-         │       │
-    ┌────┴──┐ ┌──┴────┐
-    │ bash  │ │flutter │
-    │session│ │session │
-    └───────┘ └───────┘
-```
+Unlike the previous version, **Terminal MCP 2.0** uses a direct **Stdio** approach with a **tmux** backend. 
 
-The server manages all terminal sessions. Each IDE's MCP client connects to the server to create and interact with processes.
+- **One Process**: The MCP server and session manager run together.
+- **Persistence**: Shell processes live inside tmux sessions, independent of the MCP server's lifecycle.
+- **Stability**: Uses standard stdio for communication — no more SSE or network glitches.
 
-## Tools
+## Available Tools
 
 | Tool | Description |
 |------|-------------|
-| `start_process` | Start a new process. Supports custom session aliases. |
-| `send_input` | Send text or key input to a running process. |
-| `read_output` | Read process output. Tracks a cursor internally so repeated calls return only new output. |
-| `list_sessions` | List all sessions. |
-| `get_session_info` | Get details for a specific session. |
-| `stop_process` | Terminate a process. |
-| `wait_until_complete` | Wait for a process to finish and return its output. |
-| `wait_for_seconds` | Wait for a specified duration while collecting output. |
+| `start_process` | Start a new tmux session with a command and optional alias/ID. |
+| `send_input` | Send text or control keys (e.g., `Ctrl+C`, `Enter`) to a session. |
+| `read_output` | Capture the current screen of a tmux session. |
+| `list_sessions` | List all active tmux sessions managed by this tool. |
+| `get_session_info` | Get details (PID, command, state) for a specific session. |
+| `stop_process` | Kill a tmux session. |
+| `wait_until_complete` | Wait for a process to finish and return its final state. |
 
 ## License
 
