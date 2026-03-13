@@ -1,6 +1,14 @@
-{
   "name": "terminal-mcp",
   "version": "2.0.0",
+  "author": "Yoongi Kim",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/YoongiKim/terminal-mcp.git"
+  },
+  "bugs": {
+    "url": "https://github.com/YoongiKim/terminal-mcp/issues"
+  },
+  "homepage": "https://github.com/YoongiKim/terminal-mcp#readme",
   "type": "module",
   "bin": {
     "terminal-mcp": "./dist/index.js"
