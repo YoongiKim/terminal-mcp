@@ -24,7 +24,7 @@ async function startServer() {
   
   const server = spawn("node", [serverPath], {
     detached: true,
-    stdio: "inherit",
+    stdio: "ignore",
   });
 
   server.unref();
