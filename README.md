@@ -75,9 +75,9 @@ That's it. No server to run — the IDE launches the MCP process directly via st
 
 | Tool | Description |
 |------|-------------|
-| `start_process` | Start a command in a new tmux session (supports custom IDs). |
+| `start_process` | Start a command in a new tmux session. Waits for 5 seconds and returns initial output. |
 | `read_output` | Capture current terminal output from a session. |
-| `send_input` | Send text or control keys (`Ctrl+C`, `Enter`, etc.). |
+| `send_input` | Send text or control keys. Waits for 5 seconds and returns latest output. |
 | `list_sessions` | List all active sessions. |
 | `get_session_info` | Get PID, command, and state of a session. |
 | `stop_process` | Kill a session. |

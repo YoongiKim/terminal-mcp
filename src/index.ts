@@ -16,7 +16,7 @@ const server = new McpServer({
 
 server.tool(
   "start_process",
-  "Start a new terminal process in a tmux session.",
+  "Start a new terminal process in a tmux session. Waits for 5 seconds and returns initial output.",
   {
     command: z.string().describe("The command to run"),
     args: z.array(z.string()).optional().describe("Command arguments"),
@@ -28,7 +28,28 @@ server.tool(
     const fullCommand = args && args.length > 0 ? `${command} ${args.join(" ")}` : command;
     try {
       tmux.startSession(sessionId, fullCommand, cwd);
-      return { content: [{ type: "text", text: JSON.stringify({ session_id: sessionId, message: `Process started: ${fullCommand}` }) }] };
+      
+      // Wait for 5 seconds to capture initial output
+      await new Promise((r) => setTimeout(r, 5000));
+      
+      const output = tmux.capturePane(sessionId);
+      const currentTotal = tmux.getLineCount(sessionId);
+      cursors.set(sessionId, currentTotal);
+      
+      const info = tmux.getSessionInfo(sessionId);
+      const isRunning = info.paneDead !== "1";
+
+      return { 
+        content: [{ 
+          type: "text", 
+          text: JSON.stringify({ 
+            session_id: sessionId, 
+            message: `Process started: ${fullCommand}`,
+            output,
+            is_running: isRunning
+          }) 
+        }] 
+      };
     } catch (e: any) {
       return { content: [{ type: "text", text: JSON.stringify({ error: e.message }) }], isError: true };
     }
@@ -37,7 +58,7 @@ server.tool(
 
 server.tool(
   "send_input",
-  "Send text input to a running tmux session.",
+  "Send text input to a running tmux session. Waits for 5 seconds and returns latest output.",
   {
     session_id: z.string(),
     text: z.string(),
@@ -54,7 +75,27 @@ server.tool(
       } else {
         tmux.sendKeys(session_id, text);
       }
-      return { content: [{ type: "text", text: JSON.stringify({ success: true }) }] };
+
+      // Wait for 5 seconds to capture latest output
+      await new Promise((r) => setTimeout(r, 5000));
+
+      const output = tmux.capturePane(session_id);
+      const currentTotal = tmux.getLineCount(session_id);
+      cursors.set(session_id, currentTotal);
+
+      const info = tmux.getSessionInfo(session_id);
+      const isRunning = info.paneDead !== "1";
+
+      return { 
+        content: [{ 
+          type: "text", 
+          text: JSON.stringify({ 
+            success: true,
+            output,
+            is_running: isRunning
+          }) 
+        }] 
+      };
     } catch (e: any) {
       return { content: [{ type: "text", text: JSON.stringify({ error: e.message }) }], isError: true };
     }
